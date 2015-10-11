@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "memory_analyzer"
+
+$heap = MemoryAnalyzer::HeapAnalyzer.new(ARGV[0])
+$heap.parse_with_progress
+
+require 'irb'
+IRB.start
