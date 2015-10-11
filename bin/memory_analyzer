@@ -6,5 +6,6 @@ require "memory_analyzer"
 $heap = MemoryAnalyzer::HeapAnalyzer.new(ARGV[0])
 $heap.parse_with_progress
 
+gets # I don't know why this is needed
 require 'irb'
 IRB.start
