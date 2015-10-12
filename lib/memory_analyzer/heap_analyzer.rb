@@ -124,7 +124,7 @@ module MemoryAnalyzer
     end
 
     def node_to_location(node)
-      location = node.values_at("file", "line").compact
+      location = node.values_at(:file, :line).compact
       location.empty? ? nil : location.join(":")
     end
 
