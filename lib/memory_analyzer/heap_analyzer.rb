@@ -1,6 +1,7 @@
 require 'json'
 require 'ruby-progressbar'
 require 'set'
+require 'active_support/core_ext/hash/keys'
 
 # ["address", "type", "class", "frozen", "embedded", "bytesize", "value",
 #  "encoding", "file", "line", "method", "generation", "memsize", "flags"]
@@ -54,7 +55,7 @@ module MemoryAnalyzer
       else
         puts line
         seen << address
-        Array(node["references"]).uniq.each { |ref| walk_references(ref, indent + 1, seen) }
+        Array(node[:references]).uniq.each { |ref| walk_references(ref, indent + 1, seen) }
       end
 
       nil
@@ -102,7 +103,7 @@ module MemoryAnalyzer
         File.open(file) do |f|
           f.each_line.collect do |l|
             yield if block_given? # For progress reporting
-            JSON.parse(l)
+            clean_node(JSON.parse(l))
           end
         end
 
@@ -114,6 +115,12 @@ module MemoryAnalyzer
     end
 
     private
+
+    def clean_node(node)
+      node.tap do |n|
+        n.deep_symbolize_keys!
+      end
+    end
 
     def index_all
       return if @indexed
@@ -127,18 +134,18 @@ module MemoryAnalyzer
         @index_by_address[node_to_address(node)] = node
         @index_by_location[node_to_location(node)] << node
 
-        Array(node["references"]).each do |ref|
+        Array(node[:references]).each do |ref|
           @index_by_referencing_address[ref] << node
         end
 
-        @roots << node if node["address"].nil?
+        @roots << node if node[:address].nil?
       end
 
       @indexed = true
     end
 
     def node_to_s(node)
-      str = "#{node_to_address(node)} - #{node["type"]}(#{node_to_descriptive_name(node)})"
+      str = "#{node_to_address(node)} - #{node[:type]}(#{node_to_descriptive_name(node)})"
       location = node_to_location(node)
       str << " - #{location}" if location
       str
@@ -150,21 +157,21 @@ module MemoryAnalyzer
     end
 
     def node_to_descriptive_name(node)
-      case node["type"]
-      when "CLASS", "MODULE" then node["name"]
-      when "ROOT"            then node["root"]
-      when "NODE"            then node["node_type"]
+      case node[:type]
+      when "CLASS", "MODULE" then node[:name]
+      when "ROOT"            then node[:root]
+      when "NODE"            then node[:node_type]
       else
-        if node["class"]
-          index_by_address[node["class"]]["name"]
+        if node[:class]
+          index_by_address[node[:class]][:name]
         else
-          node["type"]
+          node[:type]
         end
       end
     end
 
     def node_to_address(node)
-      node["address"] || node["root"]
+      node[:address] || node[:root]
     end
   end
 end
