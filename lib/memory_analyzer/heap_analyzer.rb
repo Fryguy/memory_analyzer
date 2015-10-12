@@ -12,19 +12,19 @@ module MemoryAnalyzer
       @file = file
     end
 
-    def index_by_address
+    def by_address
       index_all
-      @index_by_address
+      @by_address
     end
 
-    def index_by_location
+    def by_location
       index_all
-      @index_by_location
+      @by_location
     end
 
-    def index_by_referencing_address
+    def by_parent
       index_all
-      @index_by_referencing_address
+      @by_parent
     end
 
     def roots
@@ -33,14 +33,14 @@ module MemoryAnalyzer
     end
 
     def find_by_location(regex)
-      full_key = index_by_location.keys.grep(regex).first
-      index_by_location[full_key].first
+      full_key = by_location.keys.grep(regex).first
+      by_location[full_key].first
     end
 
     def walk_references(address, indent = 0, seen = Set.new)
       print("  " * indent)
 
-      node = index_by_address[address]
+      node = by_address[address]
       if node.nil?
         puts "#{address} - **MISSING**"
         return
@@ -62,13 +62,13 @@ module MemoryAnalyzer
     def walk_parents(address, indent = 0, seen = Set.new)
       print("  " * indent)
 
-      node = index_by_address[address]
+      node = by_address[address]
       if node.nil?
         puts "#{address} - **MISSING**"
         return
       end
 
-      parents = index_by_referencing_address[address]
+      parents = by_parent[address]
 
       line = node_to_s(node)
 
@@ -97,17 +97,17 @@ module MemoryAnalyzer
     def index_all
       return if @indexed
 
-      @index_by_address = {}
-      @index_by_location = Hash.new { |h, k| h[k] = Set.new }
-      @index_by_referencing_address = Hash.new { |h, k| h[k] = Set.new }
-      @roots = Set.new
+      @by_address  = {}
+      @by_location = Hash.new { |h, k| h[k] = Set.new }
+      @by_parent   = Hash.new { |h, k| h[k] = Set.new }
+      @roots       = Set.new
 
       nodes.each do |node|
-        @index_by_address[node_to_address(node)] = node
-        @index_by_location[node_to_location(node)] << node
+        @by_address[node_to_address(node)] = node
+        @by_location[node_to_location(node)] << node
 
         node[:references].each do |ref|
-          @index_by_referencing_address[ref] << node
+          @by_parent[ref] << node
         end
 
         @roots << node if node[:address].nil?
@@ -135,7 +135,7 @@ module MemoryAnalyzer
       when :NODE           then node[:node_type]
       else
         if node[:class]
-          index_by_address[node[:class]][:name]
+          by_address[node[:class]][:name]
         else
           node[:type]
         end

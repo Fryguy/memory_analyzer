@@ -24,11 +24,10 @@ which you can call helper methods.
 
 - `.file`: The file that was parsed
 - `.nodes`: An `Array` of all memory objects
-- `.index_by_address`: A `Hash` of all memory objects indexed by address
-- `.index_by_location`: A `Hash` of all memory objects grouped by location,
-  where location is `"#{file}:#{line}"`
-- `.index_by_referencing_address`: A `Hash` of all memory objects grouped by
-  the address of the object that is referencing them (i.e. their "parents").
+- `.by_address`: A `Hash` of all memory objects indexed by address
+- `.by_location`: A `Hash` of all memory objects grouped by location, where
+  location is `"#{file}:#{line}"`
+- `.by_parent`: A `Hash` of all memory objects grouped by their parents address.
 - `.roots`: A `Set` of all root objects
 - `.find_by_location(regex)`: Finds the first object whose location matches the
   provided `regex`
