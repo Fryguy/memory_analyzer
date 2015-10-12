@@ -4,25 +4,12 @@ Ruby heap analyzer
 
 ## Installation
 
-Add this line to your application's Gemfile:
-
-```ruby
-gem 'memory_analyzer'
-```
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install memory_analyzer
+Clone the repo.
 
 ## Usage
 
 ```
-cd lib
-ruby heap_analyzer.rb /path/to/heap.json
+bin/memory_analyzer /path/to/heap.json
 ```
 
 This will parse the file and drop you into an IRB session
@@ -58,7 +45,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/memory_analyzer.
+Bug reports and pull requests are welcome on GitHub at https://github.com/Fryguy/memory_analyzer.
 
 ## License
 
