@@ -55,7 +55,7 @@ module MemoryAnalyzer
       else
         puts line
         seen << address
-        Array(node[:references]).uniq.each { |ref| walk_references(ref, indent + 1, seen) }
+        node[:references].each { |ref| walk_references(ref, indent + 1, seen) }
       end
 
       nil
@@ -119,6 +119,7 @@ module MemoryAnalyzer
     def clean_node(node)
       node.tap do |n|
         n.deep_symbolize_keys!
+        n[:references] = Array(n[:references]).uniq
       end
     end
 
@@ -134,7 +135,7 @@ module MemoryAnalyzer
         @index_by_address[node_to_address(node)] = node
         @index_by_location[node_to_location(node)] << node
 
-        Array(node[:references]).each do |ref|
+        node[:references].each do |ref|
           @index_by_referencing_address[ref] << node
         end
 
