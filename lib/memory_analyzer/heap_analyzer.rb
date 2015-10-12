@@ -1,4 +1,3 @@
-require 'memory_analyzer/heap_analyzer/parser'
 require 'set'
 
 # ["address", "type", "class", "frozen", "embedded", "bytesize", "value",
@@ -46,7 +45,7 @@ module MemoryAnalyzer
         return
       end
 
-      line = node_to_s(node)
+      line = NodeHelper.new(node, self).to_s
 
       if seen.include?(address)
         puts "#{line} **SEEN**"
@@ -70,14 +69,14 @@ module MemoryAnalyzer
 
       parents = by_parent[address]
 
-      line = node_to_s(node)
+      line = NodeHelper.new(node, self).to_s
 
       if seen.include?(address)
         puts "#{line} **SEEN**"
       else
         puts line
         seen << address
-        parents.each { |n| walk_parents(node_to_address(n), indent + 1, seen) }
+        parents.each { |n| walk_parents(NodeHelper.new(n, self).to_address, indent + 1, seen) }
       end
 
       nil
@@ -103,8 +102,9 @@ module MemoryAnalyzer
       @roots       = Set.new
 
       nodes.each do |node|
-        @by_address[node_to_address(node)] = node
-        @by_location[node_to_location(node)] << node
+        node_helper = NodeHelper.new(node, self)
+        @by_address[node_helper.to_address] = node
+        @by_location[node_helper.to_location] << node
 
         node[:references].each do |ref|
           @by_parent[ref] << node
@@ -114,36 +114,6 @@ module MemoryAnalyzer
       end
 
       @indexed = true
-    end
-
-    def node_to_s(node)
-      str = "#{node_to_address(node)} - #{node[:type]}(#{node_to_descriptive_name(node)})"
-      location = node_to_location(node)
-      str << " - #{location}" if location
-      str
-    end
-
-    def node_to_location(node)
-      location = node.values_at(:file, :line).compact
-      location.empty? ? nil : location.join(":")
-    end
-
-    def node_to_descriptive_name(node)
-      case node[:type]
-      when :CLASS, :MODULE then node[:name]
-      when :ROOT           then node[:root]
-      when :NODE           then node[:node_type]
-      else
-        if node[:class]
-          by_address[node[:class]][:name]
-        else
-          node[:type]
-        end
-      end
-    end
-
-    def node_to_address(node)
-      node[:address] || node[:root]
     end
   end
 end
