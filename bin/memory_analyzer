@@ -3,6 +3,12 @@
 require "bundler/setup"
 require "memory_analyzer"
 
+if ARGV.empty?
+  puts "Usage:"
+  puts "  #{$0} /path/to/heap.json"
+  exit 1
+end
+
 $heap = MemoryAnalyzer::HeapAnalyzer.new(ARGV[0])
 $heap.parse
 
