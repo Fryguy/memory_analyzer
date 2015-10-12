@@ -39,6 +39,7 @@ module MemoryAnalyzer
         node.tap do |n|
           n.deep_symbolize_keys!
           n[:type] = n[:type].to_sym
+          n[:node_type] = n[:node_type].to_sym if n.key?(:node_type)
           n[:references] = Array(n[:references]).uniq
         end
       end
