@@ -119,6 +119,7 @@ module MemoryAnalyzer
     def clean_node(node)
       node.tap do |n|
         n.deep_symbolize_keys!
+        n[:type] = n[:type].to_sym
         n[:references] = Array(n[:references]).uniq
       end
     end
@@ -159,9 +160,9 @@ module MemoryAnalyzer
 
     def node_to_descriptive_name(node)
       case node[:type]
-      when "CLASS", "MODULE" then node[:name]
-      when "ROOT"            then node[:root]
-      when "NODE"            then node[:node_type]
+      when :CLASS, :MODULE then node[:name]
+      when :ROOT           then node[:root]
+      when :NODE           then node[:node_type]
       else
         if node[:class]
           index_by_address[node[:class]][:name]
