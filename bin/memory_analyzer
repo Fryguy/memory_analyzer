@@ -4,7 +4,7 @@ require "bundler/setup"
 require "memory_analyzer"
 
 $heap = MemoryAnalyzer::HeapAnalyzer.new(ARGV[0])
-$heap.parse_with_progress
+$heap.parse
 
 require 'irb'
 ARGV.clear # IRB.setup reads ARGV, so clear it.

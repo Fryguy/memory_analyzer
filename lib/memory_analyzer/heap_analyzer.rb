@@ -1,7 +1,5 @@
-require 'json'
-require 'ruby-progressbar'
+require 'memory_analyzer/heap_analyzer/parser'
 require 'set'
-require 'active_support/core_ext/hash/keys'
 
 # ["address", "type", "class", "frozen", "embedded", "bytesize", "value",
 #  "encoding", "file", "line", "method", "generation", "memsize", "flags"]
@@ -85,29 +83,9 @@ module MemoryAnalyzer
       nil
     end
 
-    def parse_with_progress
-      progress = ProgressBar.create(
-        :title         => "Parsing",
-        :total         => `wc -l #{file}`.split.first.to_i,
-        :format        => "%t: |%B| %e",
-        :throttle_rate => 0.1
-      )
-      parse do
-        progress.increment
-      end
-      progress.finish
-    end
-
-    def parse
-      @nodes =
-        File.open(file) do |f|
-          f.each_line.collect do |l|
-            yield if block_given? # For progress reporting
-            clean_node(JSON.parse(l))
-          end
-        end
-
-      nil
+    def parse(*args)
+      @nodes ||= Parser.parse(file, *args)
+      self
     end
 
     def inspect
@@ -115,14 +93,6 @@ module MemoryAnalyzer
     end
 
     private
-
-    def clean_node(node)
-      node.tap do |n|
-        n.deep_symbolize_keys!
-        n[:type] = n[:type].to_sym
-        n[:references] = Array(n[:references]).uniq
-      end
-    end
 
     def index_all
       return if @indexed
