@@ -21,6 +21,11 @@ module MemoryAnalyzer
       @by_location
     end
 
+    def by_type
+      index_all
+      @by_type
+    end
+
     def by_parent
       index_all
       @by_parent
@@ -98,6 +103,7 @@ module MemoryAnalyzer
 
       @by_address  = {}
       @by_location = Hash.new { |h, k| h[k] = Set.new }
+      @by_type     = Hash.new { |h, k| h[k] = Set.new }
       @by_parent   = Hash.new { |h, k| h[k] = Set.new }
       @roots       = Set.new
 
@@ -105,6 +111,7 @@ module MemoryAnalyzer
         node_helper = NodeHelper.new(node, self)
         @by_address[node_helper.to_address] = node
         @by_location[node_helper.to_location] << node
+        @by_type[node[:type]] << node
 
         node[:references].each do |ref|
           @by_parent[ref] << node
