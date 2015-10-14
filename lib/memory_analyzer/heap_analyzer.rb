@@ -88,7 +88,7 @@ module MemoryAnalyzer
     end
 
     def parse(*args)
-      @nodes ||= Parser.parse(file, *args)
+      @nodes ||= Parser.new(file, *args).parse
       self
     end
 

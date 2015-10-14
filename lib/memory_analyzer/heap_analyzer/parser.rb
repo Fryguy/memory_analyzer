@@ -4,42 +4,81 @@ require 'active_support/core_ext/hash/keys'
 
 module MemoryAnalyzer
   class HeapAnalyzer
-    module Parser
-      def self.parse(file, show_progress = true)
+    class Parser
+      attr_reader :file
+      attr_accessor :show_progress
+
+      def initialize(file, show_progress = true)
+        @file = file
+        @show_progress = show_progress
+      end
+
+      def parse
         if show_progress
-          parse_file_with_progress(file)
+          parse_file_with_progress
         else
-          parse_file(file)
+          parse_file
         end
       end
 
       private
 
-      def self.parse_file_with_progress(file)
+      def parse_file_with_progress
         progress = ProgressBar.create(
           :title         => "Parsing",
           :total         => `wc -l #{file}`.split.first.to_i,
           :format        => "%t: |%B| %e",
           :throttle_rate => 0.1
         )
-        parse_file(file) { progress.increment }
+        parse_file { progress.increment }
           .tap { progress.finish }
       end
 
-      def self.parse_file(file)
+      def parse_file
         File.foreach(file).collect do |line|
           yield if block_given? # For progress reporting
           clean_node(JSON.parse(line))
         end
       end
 
-      def self.clean_node(node)
-        node.tap do |n|
-          n.deep_symbolize_keys!
-          n[:type] = n[:type].to_sym
-          n[:node_type] = n[:node_type].to_sym if n.key?(:node_type)
-          n[:references] = Array(n[:references]).uniq
+      def clean_node(node)
+        clean_strings_via_symbolizing!(node)
+        clean_strings_via_pooling!(node)
+        clean_references!(node)
+        node
+      end
+
+      # Symbolize common simple strings to save memory
+      def clean_strings_via_symbolizing!(node)
+        node.deep_symbolize_keys!
+
+        %i(type node_type).each do |key|
+          node[key] = node[key].to_sym if node.key?(key)
         end
+      end
+
+      # Use a StringPool to share common immutable strings to save memory
+      def clean_strings_via_pooling!(node)
+        %i(address file class method value).each do |key|
+          node[key] = string_pool_intern(node[key]) if node.key?(key)
+        end
+      end
+
+      # Remove duplicate references and add empty Arrays for nodes without
+      #   references to prevent having to check later during usage
+      def clean_references!(node)
+        refs = Array(node[:references])
+        refs.uniq!
+        refs.map! { |r| string_pool_intern(r) }
+        node[:references] = refs
+      end
+
+      def string_pool
+        @string_pool ||= StringPool.new
+      end
+
+      def string_pool_intern(string)
+        string_pool.add(string)[string]
       end
     end
   end
