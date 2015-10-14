@@ -3,14 +3,8 @@ module MemoryAnalyzer
     NodeHelper = Struct.new(:node, :heap) do
       def to_s
         str = "#{to_address} - #{node[:type]}(#{to_descriptive_name})"
-        location = to_location
-        str << " - #{location}" if location
+        str << " - #{node[:location]}" if node.key?(:location)
         str
-      end
-
-      def to_location
-        location = node.values_at(:file, :line).compact
-        location.empty? ? nil : location.join(":")
       end
 
       def to_descriptive_name

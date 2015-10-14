@@ -108,9 +108,8 @@ module MemoryAnalyzer
       @roots       = Set.new
 
       nodes.each do |node|
-        node_helper = NodeHelper.new(node, self)
-        @by_address[node_helper.to_address] = node
-        @by_location[node_helper.to_location] << node
+        @by_address[NodeHelper.new(node, self).to_address] = node
+        @by_location[node[:location]] << node
         @by_type[node[:type]] << node
 
         node[:references].each do |ref|

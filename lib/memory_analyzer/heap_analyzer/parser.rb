@@ -37,10 +37,22 @@ module MemoryAnalyzer
       def parse_file
         File.foreach(file).collect do |line|
           yield if block_given? # For progress reporting
-          clean_node(JSON.parse(line))
+          enhance_node(clean_node(JSON.parse(line)))
         end
       end
 
+      # Add elements to the node that will be used later by the analyzer
+      def enhance_node(node)
+        enhance_node_with_location!(node)
+        node
+      end
+
+      def enhance_node_with_location!(node)
+        location = node.values_at(:file, :line).compact.join(":")
+        node[:location] = string_pool_intern(location) unless location.empty?
+      end
+
+      # Modify the existing elements of the node to save memory
       def clean_node(node)
         clean_strings_via_symbolizing!(node)
         clean_strings_via_pooling!(node)
