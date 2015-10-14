@@ -27,11 +27,9 @@ module MemoryAnalyzer
       end
 
       def self.parse_file(file)
-        File.open(file) do |f|
-          f.each_line.collect do |l|
-            yield if block_given? # For progress reporting
-            clean_node(JSON.parse(l))
-          end
+        File.foreach(file).collect do |line|
+          yield if block_given? # For progress reporting
+          clean_node(JSON.parse(line))
         end
       end
 
