@@ -1,6 +1,5 @@
 require 'json'
 require 'ruby-progressbar'
-require 'active_support/core_ext/hash/keys'
 
 module MemoryAnalyzer
   class HeapAnalyzer
@@ -37,8 +36,12 @@ module MemoryAnalyzer
       def parse_file
         File.foreach(file).collect do |line|
           yield if block_given? # For progress reporting
-          enhance_node(clean_node(JSON.parse(line)))
+          enhance_node(clean_node(parse_line(line)))
         end
+      end
+
+      def parse_line(line)
+        JSON.parse(line, :symbolize_names => true)
       end
 
       # Add elements to the node that will be used later by the analyzer
@@ -62,8 +65,6 @@ module MemoryAnalyzer
 
       # Symbolize common simple strings to save memory
       def clean_strings_via_symbolizing!(node)
-        node.deep_symbolize_keys!
-
         %i(type node_type).each do |key|
           node[key] = node[key].to_sym if node.key?(key)
         end
