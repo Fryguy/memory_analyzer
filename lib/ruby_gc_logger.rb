@@ -4,7 +4,13 @@ class RubyGCLogger
 
   def start_gc_statistics_thread(seconds = 60)
     require 'objspace'
-    require 'miq-process'
+
+    begin
+      require 'sys-proctable'
+    rescue LoadError
+      puts "sys-proctable isn't installed, run gem install sys-proctable"
+      exit 1
+    end
 
     # Make a time based filename
     csv      = File.open(Rails.root.join("log", "#{Process.pid}.csv"), "w+")
@@ -38,8 +44,9 @@ class RubyGCLogger
     live_objects  = gc_stat[:total_allocated_objects] - gc_stat[:total_freed_objects]
     young_objects = live_objects - gc_stat[:old_objects]
 
+    ps = Sys::ProcTable.ps(Process.pid)
     [Time.now.iso8601, live_objects, young_objects, ObjectSpace.memsize_of_all] +
-      MiqProcess.processInfo.values_at(*miq_process_keys) +
+      memory_keys.collect {|k| ps.send(k)} +
       gc_stat.values_at(*gc_stat_keys) +
       ObjectSpace.count_objects.values_at(*count_objects_keys) +
       ObjectSpace.count_objects_size.values_at(*count_objects_size_keys)
@@ -47,7 +54,7 @@ class RubyGCLogger
 
   def gc_stat_header
     [:time, :live_objects, :young_objects, :memsize_of_all] +
-      miq_process_keys +
+      memory_keys +
       gc_stat_keys +
       count_objects_keys +
       count_objects_size_keys.collect { |key| key.to_s.concat("_SIZE").to_sym }
@@ -57,8 +64,8 @@ class RubyGCLogger
     @gc_stat_keys ||= GC.stat.keys
   end
 
-  def miq_process_keys
-    @miq_process_keys ||= [:memory_usage, :memory_size]
+  def memory_keys
+    @memory_keys ||= [:rss, :vsize]
   end
 
   def count_objects_keys
