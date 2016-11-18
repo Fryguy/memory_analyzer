@@ -1,4 +1,8 @@
 require 'singleton'
+require 'pathname'
+require 'tmpdir'
+require 'time'
+
 class RubyGCLogger
   include Singleton
 
@@ -12,10 +16,12 @@ class RubyGCLogger
       exit 1
     end
 
-    # Make a time based filename
-    csv      = File.open(Rails.root.join("log", "#{Process.pid}.csv"), "w+")
-    csv.sync = true
-    # Thread.abort_on_exception = true
+    file_name                 = Pathname.new(Dir.tmpdir).join("#{Process.pid}.csv")
+    csv                       = File.open(file_name, "w+")
+    csv.sync                  = true
+    Thread.abort_on_exception = true
+
+    puts "Writing to #{file_name}"
     @gc_stat_thread = Thread.new do
       csv.puts(gc_stat_header.join(",".freeze))
       loop do
