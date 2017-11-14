@@ -97,12 +97,17 @@ module MemoryAnalyzer
       end
 
       def io_class
-        if File.extname(file) == ".gz"
+        if has_gzip_magic_number? || File.extname(file) == ".gz"
           require 'zlib'
           Zlib::GzipReader
         else
           File
         end
+      end
+
+      GZ_MAGIC_NUMBER = "\x1F\x8B".force_encoding("ASCII-8BIT").freeze
+      def has_gzip_magic_number?
+        File.binread(file, 2) == GZ_MAGIC_NUMBER
       end
     end
   end
