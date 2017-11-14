@@ -25,7 +25,7 @@ module MemoryAnalyzer
       def parse_file_with_progress
         progress = ProgressBar.create(
           :title         => "Parsing",
-          :total         => `wc -l #{file}`.split.first.to_i,
+          :total         => io_class.open(file) {|f| f.each_line.count },
           :format        => "%t: |%B| %e",
           :throttle_rate => 0.1
         )
@@ -34,9 +34,11 @@ module MemoryAnalyzer
       end
 
       def parse_file
-        File.foreach(file).collect do |line|
-          yield if block_given? # For progress reporting
-          enhance_node(clean_node(parse_line(line)))
+        io_class.open(file) do |f|
+          f.each_line.collect do |line|
+            yield if block_given? # For progress reporting
+            enhance_node(clean_node(parse_line(line)))
+          end
         end
       end
 
@@ -92,6 +94,20 @@ module MemoryAnalyzer
 
       def string_pool_intern(string)
         string_pool.add(string)[string]
+      end
+
+      def io_class
+        if has_gzip_magic_number? || File.extname(file) == ".gz"
+          require 'zlib'
+          Zlib::GzipReader
+        else
+          File
+        end
+      end
+
+      GZ_MAGIC_NUMBER = "\x1F\x8B".force_encoding("ASCII-8BIT").freeze
+      def has_gzip_magic_number?
+        File.binread(file, 2) == GZ_MAGIC_NUMBER
       end
     end
   end
