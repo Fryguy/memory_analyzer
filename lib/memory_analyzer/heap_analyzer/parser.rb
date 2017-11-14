@@ -25,7 +25,7 @@ module MemoryAnalyzer
       def parse_file_with_progress
         progress = ProgressBar.create(
           :title         => "Parsing",
-          :total         => `wc -l #{file}`.split.first.to_i,
+          :total         => File.open(file) {|f| f.each_line.count },
           :format        => "%t: |%B| %e",
           :throttle_rate => 0.1
         )
